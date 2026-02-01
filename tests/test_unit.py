@@ -11,6 +11,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tutorial_notebook"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import random
+
 import numpy as np
 import run_ex6
 import auxiliary_files.labs_utils as utils
@@ -88,6 +90,47 @@ def run_unit_tests():
         print("FAIL: Quantum circuit returned invalid bitstring")
     else:
         print("PASS: Quantum circuit returns valid bitstrings")
+
+    # Test 4: LABS symmetries (negation, reflection)
+    np.random.seed(42)
+    for _ in range(100):
+        N = np.random.randint(3, 12)
+        s = np.random.choice([-1, 1], size=N)
+        if compute_energy(s) != compute_energy(-s):
+            print("FAIL: LABS symmetry violated — E(s) != E(-s)")
+            break
+        if compute_energy(s) != compute_energy(s[::-1]):
+            print("FAIL: LABS symmetry violated — E(s) != E(reverse(s))")
+            break
+    else:
+        print("PASS: LABS symmetries (negation, reflection) on 100 random sequences")
+
+    # Test 5: Tabu search improves or maintains energy
+    np.random.seed(123)
+    for N in [5, 7]:
+        init = np.random.choice([-1, 1], size=N)
+        init_e = compute_energy(init)
+        best, best_e = run_ex6.tabu_search(init, max_iter=30, tabu_tenure=3)
+        if best_e > init_e:
+            print(f"FAIL: Tabu search worsened energy for N={N}: {init_e} -> {best_e}")
+            break
+    else:
+        print("PASS: Tabu search improves or maintains energy")
+
+    # Test 6: MTS finds known optimal (or close) for small N
+    random.seed(456)
+    np.random.seed(456)
+    found_optimal = True
+    for N, opt_e in [(5, 2), (7, 3)]:
+        best_seq, best_e, _, _ = run_ex6.memetic_tabu_search(
+            N=N, pop_size=15, generations=30, p_mut=0.15, tabu_iterations=25, verbose=False
+        )
+        if best_e > opt_e:
+            found_optimal = False
+            print(f"FAIL: MTS best E={best_e} > known optimal {opt_e} for N={N}")
+            break
+    if found_optimal:
+        print("PASS: MTS finds known optimal for N=5,7")
 
     print("=" * 60)
 

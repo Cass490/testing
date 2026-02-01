@@ -22,6 +22,22 @@ def bitstring_to_array(bs):
     return np.array([1 if b == "0" else -1 for b in bs])
 
 
+def test_g2_g4_counts():
+    """G2/G4 counts match theoretical formulas from LABS paper."""
+    # Expected: N=5 -> |G2|=4, |G4|=3; N=10 -> |G2|=20, |G4|=50
+    expected = {
+        5: (4, 3),
+        10: (20, 50),
+    }
+    for N, (want_g2, want_g4) in expected.items():
+        G2, G4 = run_ex6.get_interactions(N)
+        if len(G2) != want_g2 or len(G4) != want_g4:
+            print(f"FAIL: N={N} expected |G2|={want_g2}, |G4|={want_g4}; got {len(G2)}, {len(G4)}")
+            return False
+    print("PASS: G2/G4 counts match theoretical formulas (N=5,10)")
+    return True
+
+
 def test_get_interactions():
     errors = []
     for N in [3, 5, 7, 10]:
@@ -138,6 +154,7 @@ def run_kernel_tests():
     print("=" * 60)
 
     results = []
+    results.append(("G2/G4 counts", test_g2_g4_counts()))
     results.append(("get_interactions", test_get_interactions()))
     results.append(("thetas", test_thetas()))
     results.append(("trotterized_circuit", test_trotterized_circuit()))
